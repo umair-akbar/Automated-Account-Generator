@@ -1,8 +1,8 @@
+import ast
 import random
 import requests
 import string
-import sys
-from time import sleep
+from captcha_solver import captcha_solver
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko)'
@@ -10,38 +10,19 @@ headers = {
 url = 'https://secure.runescape.com/m=account-creation/create_account?theme=oldschool'
 payload = {}
 counter = 0  # counter for our acc creating loop. probably a better way to do this
+proxy_list = open("proxy_list.txt", "r")
 number_of_accounts = 2  # Number of accounts that we want to create
 
 
-def captcha_solver():
-    """Handles and returns recaptcha answer"""
-    api_key = '28603055fdf022735d1d83c9c0a1bbf1'  # 2captcha api key
-    site_key = '6Lcsv3oUAAAAAGFhlKrkRb029OHio098bbeyi_Hv'  # osrs site key
-    site_url = 'https://secure.runescape.com/m=account-creation/create_account?theme=oldschool'  # rs sign up page
-
-    s = requests.Session()
-
-    # here we post site key to 2captcha to get captcha ID (and we parse it here too)
-    captcha_id = s.post(f"http://2captcha.com/in.php?key={api_key}&method=userrecaptcha&googlekey={site_key}"
-                        f"&pageurl={site_url}").text.split('|')[1]
-
-    # then we parse gresponse from 2captcha response
-    recaptcha_answer = s.get(
-        f"http://2captcha.com/res.php?key={api_key}&action=get&id={captcha_id}").text
-    print("Solving captcha...")
-    while 'CAPCHA_NOT_READY' in recaptcha_answer:
-        sleep(5)
-        recaptcha_answer = s.get(
-            f"http://2captcha.com/res.php?key={api_key}&action=get&id={captcha_id}").text
-    recaptcha_answer = recaptcha_answer.split('|')[1]
-
-    return recaptcha_answer
+def get_proxy() -> dict:
+    """Returns our next proxy to use"""
+    proxy = {"https": (next(proxy_list))}
+    return proxy
 
 
-def access_page():
+def access_page(proxy):
     """Returns the status of the page"""
-    global response
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, proxies=proxy, headers=headers)
 
     if response.ok:
         print("Loaded page successfully. Continuing.")
@@ -51,9 +32,8 @@ def access_page():
         return False
 
 
-def get_payload(captcha):
+def get_payload(captcha) -> dict:
     """Generates and fills out our payload"""
-
     # Generate random email and password for the account
     email = ''.join([random.choice(string.ascii_lowercase + string.digits) for n in range(6)])
     password = email + str(random.randint(1, 1000))
@@ -77,11 +57,14 @@ def get_payload(captcha):
     }
     return payload
 
-def format_payload(payload):
+
+def format_payload(payload) -> str:
     """Neatly formats our payload data"""
     formatted_payload = (f"\nemail:{payload['email1']}, password:{payload['password1']},"
                          f" Birthday:{payload['month']}/{payload['day']}/{payload['year']}")
+
     return formatted_payload
+
 
 def save_account(formatted_payload):
     """Save the needed account information to created_accs.txt"""
@@ -91,11 +74,12 @@ def save_account(formatted_payload):
 
 def create_account(payload):
     """Creates our account and returns the registration info"""
+    proxy = get_proxy()
     requests.session()
-    if access_page() == True:
-        submit = requests.post(url, data=payload)
+    if access_page(proxy):
+        submit = requests.post(url, proxies=proxy, data=payload)
         if submit.ok:
-            save_account(format_payload(payload))
+            save_account(format_payload(payload) + '' + str(proxy))  # TODO: Format proxy with acc details correctly
             print(f"Created account and saved to created_accs.txt with the following details:"
                   f" {format_payload(payload)}\n")
         else:

@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 # User defined files
+settings.ini
+created_accs.txt
+proxy_list.txt

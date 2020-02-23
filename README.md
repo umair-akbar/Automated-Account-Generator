@@ -9,6 +9,8 @@ HOW TO USE:
 
 1. Open and edit settings.ini to fit your use case.
 
-2. Run acc_creator.py
+2. Add your list of proxies to proxy_list.txt if applicable.
 
-3. List of created accounts will save to created_accs.txt
+3. Run acc_creator.py
+
+4. List of created accounts will save to created_accs.txt

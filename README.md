@@ -11,7 +11,12 @@ add your list of proxies to proxy_list.txt in the format: socks5://USERNAME:PASS
 
 change number_of_accounts in acc_creator.py to how many accounts you'd like to create
 
+_____________________________________________________________________
 
-Run acc_creator.py
+HOW TO USE:
 
-List of created accounts will save to created_accs.txt
+1. Open and edit settings.ini to fit your use case.
+
+2. Run acc_creator.py
+
+3. List of created accounts will save to created_accs.txt

@@ -92,14 +92,6 @@ def get_payload(captcha) -> dict:
     return payload
 
 
-def format_payload(payload) -> str:
-    """Neatly formats our payload data and returns it"""
-    formatted_payload = (f"\nemail:{payload['email1']}, password:{payload['password1']},"
-                         f" Birthday:{payload['month']}/{payload['day']}/{payload['year']}")
-
-    return formatted_payload
-
-
 def check_account(submit):
     """Checks to make sure the account was successfully created"""
     submit_page = submit.text
@@ -111,10 +103,15 @@ def check_account(submit):
         return False
 
 
-def save_account(formatted_payload):
+def save_account(payload, proxy):
     """Save the needed account information to created_accs.txt"""
+    proxy = str(proxy)
+    proxy = proxy[proxy.find('@')+1:-4]  # Formatting our proxy string to only save the IP
+    formatted_payload = (f"\nemail:{payload['email1']}, password:{payload['password1']},"
+                         f" Birthday:{payload['month']}/{payload['day']}/{payload['year']}, Proxy:{proxy}")
     with open("created_accs.txt", "a+") as acc_list:
         acc_list.write(formatted_payload)
+    print(f"Created account and saved to created_accs.txt with the following details:{formatted_payload}")
 
 
 def create_account():
@@ -126,9 +123,7 @@ def create_account():
         submit = requests.post(url, proxies=proxy, data=payload)
         if submit.ok:
             if check_account(submit):
-                save_account(format_payload(payload) + '' + str(proxy))  # TODO: Format proxy with acc details correctly
-                print(f"Created account and saved to created_accs.txt with the following details:"
-                      f" {format_payload(payload)}\n")
+                save_account(payload, proxy)
             else:
                 print("We submitted our account creation but didn't get to the creation successful page.")
         else:

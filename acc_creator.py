@@ -15,7 +15,6 @@ headers = {
 	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5)'
 				  ' AppleWebKit/537.36 (KHTML, like Gecko)'
 				  ' Chrome/58.0.3029.110 Safari/537.36'}
-counter = 0  # counter for acc creation loop. Prob a better way to do this..
 try:
 	proxy_list = open("proxy_list.txt", "r")
 except FileNotFoundError:
@@ -210,12 +209,19 @@ def create_account():
 			else:
 				print(f"Creation failed. Error code {submit.status_code}")
 
-try:
-	print(f"We'll make: {NUM_OF_ACCS} accounts.")
-	print(f"Will we use proxies?: {USE_PROXIES}")
 
-	while counter < NUM_OF_ACCS:
-		counter += 1
-		create_account()
-except KeyboardInterrupt:
-	print("User stopped the account creator.")
+def main():
+	counter = 0
+	try:
+		print(f"We'll make: {NUM_OF_ACCS} accounts.")
+		print(f"Will we use proxies?: {USE_PROXIES}")
+
+		while counter < NUM_OF_ACCS:
+			counter += 1
+			create_account()
+	except KeyboardInterrupt:
+		print("User stopped the account creator.")
+
+
+if __name__ == "__main__":
+	main()

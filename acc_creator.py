@@ -117,7 +117,7 @@ def get_payload(captcha) -> dict:
 	returns:
 	payload (dict): account creation payload data
 	"""
-	# Generate random email and password for the account
+	# Get username/password options from settings.ini
 	email = get_settings_variables()[5]
 	password = get_settings_variables()[6]
 
@@ -146,7 +146,7 @@ def get_payload(captcha) -> dict:
 		'month': month,
 		'year': year,
 		'create-submit': 'create',
-		'g-recaptcha-response': '12345'
+		'g-recaptcha-response': captcha
 	}
 	return payload
 

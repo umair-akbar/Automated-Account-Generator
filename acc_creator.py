@@ -122,8 +122,7 @@ def get_payload(captcha) -> dict:
 
 	if not email:  # We aren't using a custom username prefix -> make it random
 		email = ''.join([random.choice(string.ascii_lowercase + string.digits)
-			for n in range(6)])
-		email = email + '@gmail.com'
+			for n in range(6)]) + '@gmail.com'
 	else:  # We're using a custom prefix for our usernames
 		email = email + str(random.randint(1000, 9999)) + '@gmail.com'
 
@@ -176,7 +175,7 @@ def save_account(payload, proxy=None):
 	
 	with open("created_accs.txt", "a+") as acc_list:
 		acc_list.write(formatted_payload)
-	print(f"Created account and saved to created_accs.txt"
+	print(f"Created account and saved to created_accs.txt "
 		  f"with the following details:{formatted_payload}")
 
 
@@ -192,7 +191,7 @@ def create_account():
 				if check_account(submit):
 					save_account(payload, proxy=proxy)
 				else:
-					print("We submitted our account creation request" 
+					print("We submitted our account creation request " 
 						  "but didn't get to the creation successful page.")
 			else:
 				print(f"Creation failed. Error code {submit.status_code}")
@@ -204,7 +203,7 @@ def create_account():
 				if check_account(submit):
 					save_account(payload)	
 				else:
-					print("We submitted our account creation request"
+					print("We submitted our account creation request "
 					      "but didn't get to the creation successful page.")
 			else:
 				print(f"Creation failed. Error code {submit.status_code}")

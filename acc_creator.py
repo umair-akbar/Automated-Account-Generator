@@ -2,41 +2,74 @@ import ast
 import random
 import requests
 import string
+import sys
 from time import sleep
-from my_utilities import get_settings_variables
-
+try:
+	from my_utilities import get_settings_variables
+except ImportError:
+	sys.exit("Couldn't import my_utilities.py. "
+			 "Make sure it's in the same directory.")
 
 
 headers = {
-	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko)'
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5)'
+				  ' AppleWebKit/537.36 (KHTML, like Gecko)'
 				  ' Chrome/58.0.3029.110 Safari/537.36'}
-url = 'https://secure.runescape.com/m=account-creation/create_account?theme=oldschool'
-# payload = {}
-counter = 0  # counter for our acc creating loop. probably a better way to do this
-proxy_list = open("proxy_list.txt", "r")
+counter = 0  # counter for acc creation loop. Prob a better way to do this..
+try:
+	proxy_list = open("proxy_list.txt", "r")
+except FileNotFoundError:
+	sys.exit("proxy_list.txt wasn't found. "
+			 "Make sure it's in the same directory.")
 
 # Settings pulled from get_settings_variables -> settings.ini file
-NUM_OF_ACCS = get_settings_variables()[2]  # Number of accounts that we want to create
-USE_PROXIES = get_settings_variables()[0]  # 1 for True or 0 for False from settings.ini
+USE_PROXIES = get_settings_variables()[0]
+NUM_OF_ACCS = get_settings_variables()[2]
+SITE_URL = get_settings_variables()[4]
+
 
 
 def get_ip() -> str:
-	"""Gets the user's external IP that will be used to create the account"""
+	"""
+	Gets the user's external IP that will be used to create the account.
+	Because of external dependency, we have a backup site to pull from if needed
+	"""
 	ip = requests.get('https://api.ipify.org').text
+	if not ip:
+		ip = requests.get('http://ip.42.pl/raw').text
 	return ip
+		
+ 
 
 def get_proxy() -> dict:
-	"""Returns our next proxy to use from the proxy_list.txt file"""
-	proxy = {"https": (next(proxy_list))}
-	return proxy
+	"""
+	Returns our next proxy to use from the proxy_list.txt file.
+	If we run out of proxies before we make all of the accounts, return to top.
+	"""
+	try:
+		proxy = {"https": (next(proxy_list))}
+		return proxy
+	except Exception:
+		proxy_list.seek(0)
+		proxy = {"https": (next(proxy_list))}
+		return proxy
+		
 
 
-def access_page(proxy=None): -> bool
-	"""Returns True if we were able to access the page or False if we got a request error"""
+def access_page(proxy=None):
+	"""
+	Sends a get request to our account creation url
+
+	params:
+	proxy (str): Proxy to use for get request (Default=None)
+
+	returns:
+	bool: True if the get request succeeds, false otherwise.
+	"""
 	if USE_PROXIES:
-		response = requests.get(url, proxies=proxy, headers=headers)
+		response = requests.get(SITE_URL, proxies=proxy, headers=headers)
 	else:
-		response = requests.get(url, headers=headers)
+		response = requests.get(SITE_URL, headers=headers)
 
 	if response.ok:
 		print("Loaded page successfully. Continuing.")
@@ -48,40 +81,60 @@ def access_page(proxy=None): -> bool
 
 def captcha_solver():
 	"""Handles and returns recaptcha answer for osrs account creation page"""
-	API_KEY = get_settings_variables()[1]  # 2captcha api key read from settings.ini
-	SITE_KEY = '6Lcsv3oUAAAAAGFhlKrkRb029OHio098bbeyi_Hv'  # osrs site key
-	SITE_URL = 'https://secure.runescape.com/m=account-creation/create_account?theme=oldschool'  # rs sign up page
+	SITE_KEY = get_settings_variables()[3]  # osrs site key
+	try:
+		API_KEY = get_settings_variables()[1]  # api key read from settings.ini
+		if not API_KEY:
+			raise ValueError("No API key was found in settings.ini.")
+	except ValueError as error:
+		print(error)
 
 	s = requests.Session()
 
-	# here we post site key to 2captcha to get captcha ID (and we parse it here too)
-	captcha_id = s.post(f"http://2captcha.com/in.php?key={API_KEY}&method=userrecaptcha&googlekey={SITE_KEY}"
+	# here we post and parse site key to 2captcha to get captcha ID
+	captcha_id = s.post(f"http://2captcha.com/in.php?key={API_KEY}"
+					    f"&method=userrecaptcha&googlekey={SITE_KEY}"
 						f"&pageurl={SITE_URL}").text.split('|')[1]
 
 	# then we parse gresponse from 2captcha response
 	recaptcha_answer = s.get(
-		f"http://2captcha.com/res.php?key={API_KEY}&action=get&id={captcha_id}").text
+		f"http://2captcha.com/res.php?key={API_KEY}"
+		f"&action=get&id={captcha_id}").text
 	print("Solving captcha...")
 	while 'CAPCHA_NOT_READY' in recaptcha_answer:
 		sleep(20)
 		recaptcha_answer = s.get(
-			f"http://2captcha.com/res.php?key={API_KEY}&action=get&id={captcha_id}").text
+			f"http://2captcha.com/res.php?key={API_KEY}"
+			f"&action=get&id={captcha_id}").text
 	recaptcha_answer = recaptcha_answer.split('|')[1]
 
 	return recaptcha_answer
 
 
 def get_payload(captcha) -> dict:
-	"""Generates and fills out our payload.
-	   Returns payload as dict"""
+	"""
+	Generates and fills out our payload.
+	returns:
+	payload (dict): account creation payload data
+	"""
 	# Generate random email and password for the account
-	email = ''.join([random.choice(string.ascii_lowercase + string.digits) for n in range(6)])
-	password = email + str(random.randint(1, 1000))
-	email = email + '@gmail.com'
+	email = get_settings_variables()[5]
+	password = get_settings_variables()[6]
+
+	if not email:  # We aren't using a custom username prefix -> make it random
+		email = ''.join([random.choice(string.ascii_lowercase + string.digits)
+			for n in range(6)])
+		email = email + '@gmail.com'
+	else:  # We're using a custom prefix for our usernames
+		email = email + str(random.randint(1000, 9999)) + '@gmail.com'
+
+	if not password:
+		password = email[:-10] + str(random.randint(1, 1000))
+
 	# Generate random birthday for the account
 	day = str(random.randint(1, 25))
 	month = str(random.randint(1, 12))
-	year = str(random.randint(1980, 2006))  # Make sure to be at least 13 years old
+	year = str(random.randint(1980, 2006))  # Be at least 13 years old
 
 	payload = {
 		'theme': 'oldschool',
@@ -93,12 +146,12 @@ def get_payload(captcha) -> dict:
 		'month': month,
 		'year': year,
 		'create-submit': 'create',
-		'g-recaptcha-response': captcha
+		'g-recaptcha-response': '12345'
 	}
 	return payload
 
 
-def check_account(submit): -> bool
+def check_account(submit):
 	"""Checks to make sure the account was successfully created"""
 	submit_page = submit.text
 	success = '<p>You can now begin your adventure with your new account.</p>'
@@ -112,17 +165,20 @@ def check_account(submit): -> bool
 def save_account(payload, proxy=None):
 	"""Save the needed account information to created_accs.txt"""
 	if USE_PROXIES:
+		# Formatting our proxy string to only save the IP
 		proxy = str(proxy)
-		proxy = proxy[proxy.find('@')+1:]  # Formatting our proxy string to only save the IP
+		proxy = proxy[proxy.find('@')+1:]
 		proxy = proxy[:proxy.find(':')]
 	else:
 		proxy = get_ip()
 	formatted_payload = (f"\nemail:{payload['email1']}, password:{payload['password1']},"
-						 f" Birthday:{payload['month']}/{payload['day']}/{payload['year']}, Proxy:{proxy}")
+						 f" Birthday:{payload['month']}/{payload['day']}/{payload['year']},"
+						 f" Proxy:{proxy}")
 	
 	with open("created_accs.txt", "a+") as acc_list:
 		acc_list.write(formatted_payload)
-	print(f"Created account and saved to created_accs.txt with the following details:{formatted_payload}")
+	print(f"Created account and saved to created_accs.txt"
+		  f"with the following details:{formatted_payload}")
 
 
 def create_account():
@@ -132,31 +188,34 @@ def create_account():
 		proxy = get_proxy()
 		if access_page(proxy):
 			payload = get_payload(captcha_solver())
-			submit = requests.post(url, data=payload, proxies=proxy)
+			submit = requests.post(SITE_URL, data=payload, proxies=proxy)
 			if submit.ok:
 				if check_account(submit):
 					save_account(payload, proxy=proxy)
 				else:
-					print("We submitted our account creation but didn't get to the creation successful page.")
+					print("We submitted our account creation request" 
+						  "but didn't get to the creation successful page.")
 			else:
 				print(f"Creation failed. Error code {submit.status_code}")
 	else:  # Not using proxies so we'll create the account(s) with our real IP
 		if access_page():
 			payload = get_payload(captcha_solver())
-			submit = requests.post(url, data=payload)
+			submit = requests.post(SITE_URL, data=payload)
 			if submit.ok:
 				if check_account(submit):
 					save_account(payload)	
 				else:
-					print("We submitted our account creation but didn't get to the creation successful page.")
+					print("We submitted our account creation request"
+					      "but didn't get to the creation successful page.")
 			else:
 				print(f"Creation failed. Error code {submit.status_code}")
 
+try:
+	print(f"We'll make: {NUM_OF_ACCS} accounts.")
+	print(f"Will we use proxies?: {USE_PROXIES}")
 
-print(f"We'll make: {NUM_OF_ACCS} accounts.")
-print(f"Will we use proxies?: {USE_PROXIES}")
-
-while counter < NUM_OF_ACCS:
-	counter += 1
-	create_account()
-	
+	while counter < NUM_OF_ACCS:
+		counter += 1
+		create_account()
+except KeyboardInterrupt:
+	print("User stopped the account creator.")

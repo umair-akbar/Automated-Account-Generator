@@ -7,10 +7,12 @@ _____________________________________________________________________
 
 HOW TO USE:
 
-1. Open and edit settings.ini to fit your use case.
+1. Put acc_creator.py, my_utilities.py, proxy_list.txt, created_accs.txt, and settings.ini in the same folder.
 
-2. Add your list of proxies to proxy_list.txt if applicable.
+2. Open, edit, and save settings.ini to fit your use case.
 
-3. Run acc_creator.py
+3. Add your list of proxies to proxy_list.txt if applicable.
 
-4. List of created accounts will save to created_accs.txt
+4. Run acc_creator.py
+
+5. List of created accounts will save to created_accs.txt

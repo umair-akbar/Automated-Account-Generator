@@ -13,6 +13,6 @@ HOW TO USE:
 
 3. Add your list of proxies to proxy_list.txt if applicable.
 
-4. Run acc_creator.py
+4. Navigate to the created folder within terminal and run: python acc_creator.py
 
 5. List of created accounts will save to created_accs.txt

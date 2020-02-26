@@ -6,6 +6,8 @@ import requests
 import string
 import sys
 from time import sleep
+from socket import error as socket_error
+
 try:
 	from my_utilities import get_settings_variables
 except ImportError:
@@ -68,7 +70,11 @@ def access_page(proxy=None):
 	bool: True if the get request succeeds, false otherwise.
 	"""
 	if USE_PROXIES:
-		response = requests.get(SITE_URL, proxies=proxy, headers=headers)
+		try:
+			response = requests.get(SITE_URL, proxies=proxy, headers=headers)
+		except socket_error as error:
+			print(error)
+			print(f"Something with your proxy: {proxy} is likely bad.")
 	else:
 		response = requests.get(SITE_URL, headers=headers)
 
@@ -83,19 +89,21 @@ def access_page(proxy=None):
 def captcha_solver():
 	"""Handles and returns recaptcha answer for osrs account creation page"""
 	SITE_KEY = get_settings_variables()[3]  # osrs site key
-	try:
-		API_KEY = get_settings_variables()[1]  # api key read from settings.ini
-		if not API_KEY:
-			raise ValueError("No API key was found in settings.ini.")
-	except ValueError as error:
-		print(error)
+	API_KEY = get_settings_variables()[1]  # api key read from settings.ini
+	if not API_KEY:
+		raise ValueError("No API key was found in settings.ini.")
+
 
 	s = requests.Session()
 
 	# here we post and parse site key to 2captcha to get captcha ID
-	captcha_id = s.post(f"http://2captcha.com/in.php?key={API_KEY}"
-					    f"&method=userrecaptcha&googlekey={SITE_KEY}"
-						f"&pageurl={SITE_URL}").text.split('|')[1]
+	try:
+		captcha_id = s.post(f"http://2captcha.com/in.php?key={API_KEY}"
+							f"&method=userrecaptcha&googlekey={SITE_KEY}"
+							f"&pageurl={SITE_URL}").text.split('|')[1]
+	except IndexError:
+		print("You likely don't have a valid 2captcha.com API key with funds"
+				 " in your settings.ini file. Fix and re-run the program.")
 
 	# then we parse gresponse from 2captcha response
 	recaptcha_answer = s.get(
@@ -103,13 +111,18 @@ def captcha_solver():
 		f"&action=get&id={captcha_id}").text
 	print("Solving captcha...")
 	while 'CAPCHA_NOT_READY' in recaptcha_answer:
-		sleep(20)
+		sleep(6)
 		recaptcha_answer = s.get(
 			f"http://2captcha.com/res.php?key={API_KEY}"
 			f"&action=get&id={captcha_id}").text
-	recaptcha_answer = recaptcha_answer.split('|')[1]
-
-	return recaptcha_answer
+	try:
+		recaptcha_answer = recaptcha_answer.split('|')[1]
+	except IndexError:
+		print("2captcha failed to solve this one.. Returning a blank response "
+			  "If the program fails to continue, please msg Gavin with error.")
+		recaptcha_answer = ''
+	else:
+		return recaptcha_answer
 
 
 def get_payload(captcha) -> dict:
@@ -177,8 +190,8 @@ def save_account(payload, proxy=None):
 	
 	with open("created_accs.txt", "a+") as acc_list:
 		acc_list.write(formatted_payload)
-	print(f"Created account and saved to created_accs.txt "
-		  f"with the following details:{formatted_payload}")
+	print(f"Created account and saved to created_accs.txt"
+		  f" with the following details:{formatted_payload}")
 
 
 def create_account():

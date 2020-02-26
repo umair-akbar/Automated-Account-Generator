@@ -5,10 +5,15 @@ Uses POST requests to create Old School Runescape accounts with 2captcha integra
 
 _____________________________________________________________________
 Requirements:
+
 Download python 3.x from https://www.python.org/downloads/
+
 Make sure python is added to PATH
+
 After Python is installed, open cmd/powershell and run: 
+
 pip install requests
+
 pip install requests[socks]
 
 HOW TO USE:

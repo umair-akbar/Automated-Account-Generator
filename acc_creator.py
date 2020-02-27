@@ -184,14 +184,24 @@ def save_account(payload, proxy=None):
 		proxy = proxy[:proxy.find(':')]
 	else:
 		proxy = get_ip()
-	formatted_payload = (f"\nemail:{payload['email1']}, password:{payload['password1']},"
-						 f" Birthday:{payload['month']}/{payload['day']}/{payload['year']},"
-						 f" Proxy:{proxy}")
+
+	# Check if we want user friendly formatting or bot manager friendly
+	acc_details_format = get_settings_variables()[7]
+	if acc_details_format:
+		formatted_payload = (f"\nemail:{payload['email1']}, password:{payload['password1']},"
+							 f" Birthday:{payload['month']}/{payload['day']}/{payload['year']},"
+							 f" Proxy:{proxy}")
+	else:
+		formatted_payload = (f"{payload['email1']}:{payload['password1']}")
 	
 	with open("created_accs.txt", "a+") as acc_list:
 		acc_list.write(formatted_payload)
-	print(f"Created account and saved to created_accs.txt"
-		  f" with the following details:{formatted_payload}")
+	if not acc_details_format:
+		print(f"Created account and saved to created_accs.txt"
+			  f" with the following details:{formatted_payload}")
+	else:
+		print(f"Created account and saved to created_accs.txt"
+			  f" with the following details: {formatted_payload}:{proxy}")
 
 
 def create_account():

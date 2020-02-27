@@ -17,6 +17,7 @@ def get_settings_variables():
         num_of_accs = config['USER_SETTINGS'].getint('num_of_accs')
         username_prefix = config['USER_SETTINGS'].get('username_prefix')
         password = config['USER_SETTINGS'].get('password')
+        acc_details_format = config['USER_SETTINGS'].getboolean('acc_details_format')
 
 
          # Return our [SITE_SETTINGS]
@@ -24,4 +25,4 @@ def get_settings_variables():
         site_url = config['SITE_SETTINGS'].get('site_url')
 
         return (use_proxies, captcha_api_key, num_of_accs, site_key, site_url, 
-                username_prefix, password)
+                username_prefix, password, acc_details_format)

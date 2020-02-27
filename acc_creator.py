@@ -192,11 +192,11 @@ def save_account(payload, proxy=None):
 							 f" Birthday:{payload['month']}/{payload['day']}/{payload['year']},"
 							 f" Proxy:{proxy}")
 	else:
-		formatted_payload = (f"{payload['email1']}:{payload['password1']}")
+		formatted_payload = (f"\n{payload['email1']}:{payload['password1']}")
 	
 	with open("created_accs.txt", "a+") as acc_list:
 		acc_list.write(formatted_payload)
-	if not acc_details_format:
+	if acc_details_format:
 		print(f"Created account and saved to created_accs.txt"
 			  f" with the following details:{formatted_payload}")
 	else:

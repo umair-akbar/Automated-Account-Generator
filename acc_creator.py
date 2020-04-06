@@ -7,6 +7,7 @@ import string
 import sys
 from time import sleep
 from socket import error as socket_error
+from tribot_cli import use_tribot
 
 try:
 	from my_utilities import get_settings_variables
@@ -53,6 +54,7 @@ def get_proxy() -> dict:
 		proxy = {"https": (next(proxy_list))}
 		return proxy
 	except Exception:
+		# We'll return to the top of our list once we run out of proxies
 		proxy_list.seek(0)
 		proxy = {"https": (next(proxy_list))}
 		return proxy
@@ -215,6 +217,8 @@ def create_account():
 			if submit.ok:
 				if check_account(submit):
 					save_account(payload, proxy=proxy)
+					if get_settings_variables()[8]:
+						use_tribot(payload['email1'], payload['password1'])	
 				else:
 					print("We submitted our account creation request " 
 						  "but didn't get to the creation successful page.")
@@ -226,7 +230,9 @@ def create_account():
 			submit = requests.post(SITE_URL, data=payload)
 			if submit.ok:
 				if check_account(submit):
-					save_account(payload)	
+					save_account(payload)
+					if get_settings_variables()[8]:
+						use_tribot(payload['email1'], payload['password1'])	
 				else:
 					print("We submitted our account creation request "
 					      "but didn't get to the creation successful page.")

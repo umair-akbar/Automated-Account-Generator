@@ -24,5 +24,14 @@ def get_settings_variables():
         site_key = config['SITE_SETTINGS'].get('site_key')
         site_url = config['SITE_SETTINGS'].get('site_url')
 
+        # Return out [TRIBOT_CLI_SETTINGS]
+        use_tribot = config['TRIBOT_CLI_SETTINGS'].getboolean('use_tribot')
+        tribot_username = config['TRIBOT_CLI_SETTINGS'].get('tribot_username')
+        tribot_password = config['TRIBOT_CLI_SETTINGS'].get('tribot_password')
+        script_to_use = config['TRIBOT_CLI_SETTINGS'].get('script_to_use')
+        script_args = config['TRIBOT_CLI_SETTINGS'].get('script_args')
+
+
         return (use_proxies, captcha_api_key, num_of_accs, site_key, site_url, 
-                username_prefix, password, acc_details_format)
+                username_prefix, password, acc_details_format,
+                use_tribot, tribot_username, tribot_password, script_to_use, script_args)

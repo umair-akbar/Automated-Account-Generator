@@ -56,15 +56,16 @@ def use_tribot(charname, charpass, proxy=None):
     script_to_use = get_settings_variables()[11]
     script_args = get_settings_variables()[12]
 
-    proxy_username = format_current_proxy(proxy)[0]
-    proxy_password = format_current_proxy(proxy)[1]
-    proxy_host = format_current_proxy(proxy)[2]
-    proxy_port = format_current_proxy(proxy)[3]
+    if use_proxies:
+        proxy_username = format_current_proxy(proxy)[0]
+        proxy_password = format_current_proxy(proxy)[1]
+        proxy_host = format_current_proxy(proxy)[2]
+        proxy_port = format_current_proxy(proxy)[3]
 
     original_path = os.getcwd()
     client = find_tribot()
 
-    # Create our CLI command and change depending on if we're using proxies or not
+    # Create our CLI command according to if we're using proxies or not
     if use_proxies:
         cli_cmd = (f'java -jar {client} '
                 f'--username "{tribot_username}" --password "{tribot_password}" '

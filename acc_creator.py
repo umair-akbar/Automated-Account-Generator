@@ -7,7 +7,7 @@ import string
 import sys
 from time import sleep
 from socket import error as socket_error
-from tribot_cli import use_tribot
+from tribot_cli import use_tribot, get_index
 
 try:
 	from my_utilities import get_settings_variables
@@ -30,6 +30,7 @@ except FileNotFoundError:
 USE_PROXIES = get_settings_variables()[0]
 NUM_OF_ACCS = get_settings_variables()[2]
 SITE_URL = get_settings_variables()[4]
+tribot_active = get_settings_variables()[8]
 
 
 
@@ -170,11 +171,15 @@ def check_account(submit):
 	"""Checks to make sure the account was successfully created"""
 	submit_page = submit.text
 	success = '<p>You can now begin your adventure with your new account.</p>'
-	if submit_page.find(success):
+	if success in submit_page:
+		print ("\nWe made it to the account created page.\n")
 		return True
-	else:
-		print (submit.text)
+	elif 'Warning!' in submit_page: # If account creation fails, print the error
+		error_text = submit_page[get_index(submit_page, 'Warning!', 1)+23:]
+		error_text = error_text[:get_index(error_text, '<', 1)]
+		print(error_text)
 		return False
+
 
 
 def save_account(payload, proxy=None):
@@ -217,7 +222,7 @@ def create_account():
 			if submit.ok:
 				if check_account(submit):
 					save_account(payload, proxy=proxy)
-					if get_settings_variables()[8]:
+					if tribot_active:
 						use_tribot(payload['email1'], payload['password1'], proxy)	
 				else:
 					print("We submitted our account creation request " 
@@ -231,7 +236,7 @@ def create_account():
 			if submit.ok:
 				if check_account(submit):
 					save_account(payload)
-					if get_settings_variables()[8]:
+					if tribot_active:
 						use_tribot(payload['email1'], payload['password1'])	
 				else:
 					print("We submitted our account creation request "
@@ -245,6 +250,7 @@ def main():
 	try:
 		print(f"We'll make: {NUM_OF_ACCS} accounts.")
 		print(f"Will we use proxies?: {USE_PROXIES}")
+		print(f"Will we use Tribot CLI?: {tribot_active}")
 
 		while counter < NUM_OF_ACCS:
 			counter += 1

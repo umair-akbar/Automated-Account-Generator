@@ -218,7 +218,7 @@ def create_account():
 				if check_account(submit):
 					save_account(payload, proxy=proxy)
 					if get_settings_variables()[8]:
-						use_tribot(payload['email1'], payload['password1'])	
+						use_tribot(payload['email1'], payload['password1'], proxy)	
 				else:
 					print("We submitted our account creation request " 
 						  "but didn't get to the creation successful page.")

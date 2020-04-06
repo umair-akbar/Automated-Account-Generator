@@ -30,19 +30,55 @@ def find_tribot():
 
     return client
 
+def get_index(input_string, sub_string, ordinal):
+    current = -1
+    for i in range(ordinal):
+        current = input_string.index(sub_string, current + 1)
+    return current
 
-def use_tribot(charname, charpass):
+def format_current_proxy(proxy):
+    """Formats and returns our current proxy for CLI use"""
+    proxy = str(proxy)
+
+    # Formatting shenanigans to get the strings we need for CLI usage
+    proxy_username = proxy[get_index(proxy, '/', 2)+1:get_index(proxy, ':', 3)]
+    proxy_password = proxy[get_index(proxy, ':', 3)+1:get_index(proxy, '@', 1)]
+    proxy_ip = proxy[get_index(proxy, '@', 1)+1:get_index(proxy, ':', 4)]
+    proxy_port = proxy[get_index(proxy, ':', 4)+1:get_index(proxy, "'", 4)]
+
+    return proxy_username, proxy_password, proxy_ip, proxy_port
+
+def use_tribot(charname, charpass, proxy=None):
+    # Storing all of our settings while we're in the correct directory
+    use_proxies = get_settings_variables()[0]
     tribot_username = get_settings_variables()[9]
     tribot_password = get_settings_variables()[10]
     script_to_use = get_settings_variables()[11]
     script_args = get_settings_variables()[12]
 
+    proxy_username = format_current_proxy(proxy)[0]
+    proxy_password = format_current_proxy(proxy)[1]
+    proxy_host = format_current_proxy(proxy)[2]
+    proxy_port = format_current_proxy(proxy)[3]
+
     original_path = os.getcwd()
     client = find_tribot()
-    cli_cmd = (f'java -jar {client} '
-               f'--username "{tribot_username}" --password "{tribot_password}" '
-               f'--charusername "{charname}" --charpassword "{charpass}" '
-               f'--script "{script_to_use}" --charworld "433"')
+
+    # Create our CLI command and change depending on if we're using proxies or not
+    if use_proxies:
+        cli_cmd = (f'java -jar {client} '
+                f'--username "{tribot_username}" --password "{tribot_password}" '
+                f'--charusername "{charname}" --charpassword "{charpass}" '
+                f'--script "{script_to_use}" --charworld "433" '
+                f'--proxyhost "{proxy_host}" '
+                f'--proxyport "{proxy_port}" '
+                f'--proxyusername "{proxy_username}" '
+                f'--proxypassword "{proxy_password}" ')
+    else:
+        cli_cmd = (f'java -jar {client} '
+            f'--username "{tribot_username}" --password "{tribot_password}" '
+            f'--charusername "{charname}" --charpassword "{charpass}" '
+            f'--script "{script_to_use}" --charworld "433"')
 
     print("")
     print("\nLoading tribot with the following settings...")

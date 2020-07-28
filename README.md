@@ -1,4 +1,4 @@
-# osrs_acc_creator
+# OSRS Automated Account Generation Tool
 Account creator personal project for the game Old School Runescape
 
 Uses requests to create Old School Runescape accounts with 2captcha integration to bypass Recaptcha as well as proxy support.
